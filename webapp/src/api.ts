@@ -81,7 +81,6 @@ export async function endTrip(tripId: number): Promise<boolean> {
   }
 }
 
-// Matches the TelemetryRecord struct in your Go API
 export interface TelemetryRecord {
   id: number;
   trip_id: number;
