@@ -1,0 +1,19 @@
+services:
+  db:
+    # This tells Compose to build the image using the Dockerfile in the current directory
+    build: ./database
+    container_name: location-tracker-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=tracker_db
+    volumes:
+      # This is crucial: it saves your database data permanently on your Windows machine 
+      # so your trip data doesn't get wiped out if the container stops or restarts.
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

@@ -1,0 +1,4 @@
+go mod init
+
+## To run
+go mod .
