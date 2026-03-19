@@ -95,7 +95,7 @@ export interface TelemetryRecord {
 export async function getTripTelemetry(tripId: number): Promise<TelemetryRecord[]> {
   try {
     // If you are testing on your phone, change localhost to your Ngrok URL!
-    const response = await fetch(`http://localhost:8080/api/trips/${tripId}/telemetry`, {
+    const response = await fetch(`${locationBaseURL}/api/trips/${tripId}/telemetry`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
