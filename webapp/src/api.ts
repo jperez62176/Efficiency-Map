@@ -11,9 +11,11 @@ export interface TelemetryPayload {
   speed_mps: number | null;
 }
 
+const locationBaseURL = 'https://iconographic-noncontributively-karoline.ngrok-free.dev';
+
 export async function startNewTrip(): Promise<number | null> {
   try {
-    const response = await fetch('http://localhost:8080/api/trips', {
+    const response = await fetch(`${locationBaseURL}/api/trips`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json'
@@ -37,7 +39,7 @@ export async function startNewTrip(): Promise<number | null> {
 
 export async function sendTelemetryData(payload: TelemetryPayload): Promise<boolean> {
   try {
-    const response = await fetch('http://localhost:8080/api/telemetry', {
+    const response = await fetch(`${locationBaseURL}/api/telemetry`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +61,7 @@ export async function sendTelemetryData(payload: TelemetryPayload): Promise<bool
 
 export async function endTrip(tripId: number): Promise<boolean> {
   try {
-    const response = await fetch(`http://localhost:8080/api/trips/${tripId}`, {
+    const response = await fetch(`${locationBaseURL}/api/trips/${tripId}`, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
@@ -67,7 +69,7 @@ export async function endTrip(tripId: number): Promise<boolean> {
     });
 
     if (!response.ok) {
-      throw new Error(`Server returned ${response.status}`);
+      console.error(`Server returned ${response.status}`);
     }
 
     console.log(`Trip ${tripId} successfully ended.`);

@@ -97,8 +97,8 @@ func (s *APIServer) Run() {
 	}).Methods("PUT")
 
 	cors := handlers.CORS(
-		handlers.AllowedOrigins([]string{"http://localhost:5173"}),
-		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
+		handlers.AllowedOrigins([]string{"http://localhost:5173", "https://efficiency-tracker-jet.vercel.app"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"}),
 		handlers.AllowedHeaders([]string{"Content-Type"}),
 	)
 

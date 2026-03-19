@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { startNewTrip, sendTelemetryData } from './api.ts';
+import { startNewTrip, sendTelemetryData, endTrip } from './api.ts';
 
 function App() {
   const [location, setLocation] = useState<{ lat: number; lng: number, alt: number } | null>(null);
@@ -29,6 +29,10 @@ function App() {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
+      }
+      // Ping the Go server to stamp the end_time
+      if (currentTripId) {
+         await endTrip(currentTripId);
       }
       
       // 2. Reset the UI state
