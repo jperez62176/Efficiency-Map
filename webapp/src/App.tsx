@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { startNewTrip, sendTelemetryData, endTrip } from './api.ts';
+import SpeedChart from './components/SpeedChart.tsx';
+import RouteMap from './components/RouteMap.tsx';
 
 function App() {
   const [location, setLocation] = useState<{ lat: number; lng: number, alt: number } | null>(null);
@@ -9,7 +11,7 @@ function App() {
 
   const [currentTripId, setCurrentTripId] = useState<number | null>(null);
   const [isTracking, setIsTracking] = useState(false);
-  
+
   // Create a ref to store the tracking loop ID without causing re-renders
   const watchIdRef = useRef<number | null>(null);
 
@@ -32,20 +34,20 @@ function App() {
       }
       // Ping the Go server to stamp the end_time
       if (currentTripId) {
-         await endTrip(currentTripId);
+        await endTrip(currentTripId);
       }
-      
+
       // 2. Reset the UI state
       setLocation(null);
       setIsTracking(false);
       setIsLoading(false);
       setCurrentTripId(null);
       return;
-    } 
-    
+    }
+
     // --- START TRACKING LOGIC ---
     const tripId = await startNewTrip();
-    
+
     if (tripId) {
       setCurrentTripId(tripId);
       setIsTracking(true);
@@ -58,21 +60,21 @@ function App() {
     // 3. Request the current position and save the loop ID to our ref
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
-        
+
         // FIX: Use the local `tripId` variable directly, NOT `currentTripId!`
         sendTelemetryData({
-          trip_id: tripId, 
+          trip_id: tripId,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           altitude_meters: position.coords.altitude,
           speed_mps: position.coords.speed
         });
-        
+
         // Success callback updating the UI
         setLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-          alt: position.coords.altitude || 0 
+          alt: position.coords.altitude || 0
         });
         setTimestamp(new Date(position.timestamp).toLocaleString());
         setIsLoading(false);
@@ -82,9 +84,9 @@ function App() {
         setIsLoading(false);
       },
       {
-        enableHighAccuracy: true, 
-        timeout: 10000,           
-        maximumAge: 0             
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   };
@@ -97,9 +99,8 @@ function App() {
         <button
           onClick={handleGetLocation}
           disabled={isLoading}
-          className={`font-semibold py-2 px-6 rounded-lg transition-colors mb-6 disabled:opacity-50 ${
-            isTracking ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
-          }`}
+          className={`font-semibold py-2 px-6 rounded-lg transition-colors mb-6 disabled:opacity-50 ${isTracking ? 'bg-red-600 hover:bg-red-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
+            }`}
         >
           {isLoading ? 'Processing...' : isTracking ? 'Stop Tracking' : 'Start Driving'}
         </button>
@@ -120,6 +121,13 @@ function App() {
           </div>
         )}
       </div>
+      
+      {!isTracking && (
+        <>
+          <SpeedChart tripId={32} />
+          <RouteMap tripId={32} />
+        </>
+      )}
     </div>
   )
 }

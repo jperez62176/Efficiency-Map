@@ -80,3 +80,39 @@ export async function endTrip(tripId: number): Promise<boolean> {
     return false;
   }
 }
+
+// Matches the TelemetryRecord struct in your Go API
+export interface TelemetryRecord {
+  id: number;
+  trip_id: number;
+  latitude: number;
+  longitude: number;
+  altitude_meters: number | null;
+  speed_mps: number | null;
+  recorded_at: string; // Go's time.Time serializes to an ISO 8601 string in JSON
+}
+
+export async function getTripTelemetry(tripId: number): Promise<TelemetryRecord[]> {
+  try {
+    // If you are testing on your phone, change localhost to your Ngrok URL!
+    const response = await fetch(`http://localhost:8080/api/trips/${tripId}/telemetry`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server returned ${response.status}`);
+    }
+
+    const data: TelemetryRecord[] = await response.json();
+    console.log(`Fetched ${data.length} telemetry records for trip ${tripId}.`);
+    
+    return data;
+
+  } catch (error) {
+    console.error("Failed to fetch trip telemetry:", error);
+    return []; // Return an empty array on failure so your charts don't crash
+  }
+}

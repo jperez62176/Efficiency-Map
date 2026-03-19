@@ -12,6 +12,7 @@ type Storage interface {
 	InsertTelemetryData(payload TelemetryPayload) error
 	CreateTrip() (int, error)
 	EndTrip(tripID int) error
+	GetTripTelemetry(tripID int) ([]TelemetryRecord, error)
 }
 
 type PostgresStorage struct {
@@ -93,4 +94,41 @@ func (s *PostgresStorage) EndTrip(tripID int) error {
 func (s *PostgresStorage) Close() {
 	s.db.Close()
 	log.Println("Database connection closed")
+}
+
+func (s *PostgresStorage) GetTripTelemetry(tripID int) ([]TelemetryRecord, error) {
+	// The ORDER BY clause guarantees your frontend line charts will draw sequentially
+	query := `
+		SELECT id, trip_id, latitude, longitude, altitude_meters, speed_mps, recorded_at
+		FROM telemetry
+		WHERE trip_id = $1
+		ORDER BY recorded_at ASC`
+
+	rows, err := s.db.Query(query, tripID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Initialize with an empty slice so it returns [] in JSON instead of null if empty
+	records := []TelemetryRecord{}
+
+	for rows.Next() {
+		var r TelemetryRecord
+		err := rows.Scan(
+			&r.ID,
+			&r.TripID,
+			&r.Latitude,
+			&r.Longitude,
+			&r.AltitudeMeters,
+			&r.SpeedMPS,
+			&r.RecordedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, r)
+	}
+
+	return records, nil
 }

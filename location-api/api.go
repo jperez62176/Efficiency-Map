@@ -70,6 +70,7 @@ func (s *APIServer) Run() {
 			"trip_id": tripID,
 		})
 	}).Methods("POST")
+
 	router.HandleFunc("/api/trips/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		tripIDStr := vars["id"]
@@ -96,6 +97,30 @@ func (s *APIServer) Run() {
 		})
 	}).Methods("PUT")
 
+	router.HandleFunc("/api/trips/{id}/telemetry", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		tripIDStr := vars["id"]
+		
+		tripID, err := strconv.Atoi(tripIDStr)
+		if err != nil {
+			http.Error(w, "Invalid trip ID format", http.StatusBadRequest)
+			return
+		}
+
+		// Fetch the array of records
+		records, err := s.store.GetTripTelemetry(tripID)
+		if err != nil {
+			log.Printf("Error fetching telemetry for trip %d: %v\n", tripID, err)
+			http.Error(w, "Failed to retrieve telemetry data", http.StatusInternalServerError)
+			return
+		}
+
+		// Return the JSON array
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(records)
+	}).Methods("GET")
+	
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173", "https://efficiency-tracker-jet.vercel.app"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"}),
