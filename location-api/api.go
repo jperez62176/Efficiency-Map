@@ -120,11 +120,11 @@ func (s *APIServer) Run() {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(records)
 	}).Methods("GET")
-	
+
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173", "https://efficiency-tracker-jet.vercel.app"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"Content-Type"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Accept", "ngrok-skip-browser-warning"}),
 	)
 
 	fmt.Println("🚀 API Server is running on http://localhost:", s.listenAddr)
