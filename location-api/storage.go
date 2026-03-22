@@ -67,7 +67,7 @@ func (s *PostgresStorage) CreateTrip() (int, error) {
 	var insertedID int
 
 	err := s.db.QueryRow(sqlStatement).Scan(&insertedID)
-	
+
 	if err != nil {
 		log.Printf("Error creating trip: %v\n", err)
 	}
@@ -84,7 +84,7 @@ func (s *PostgresStorage) EndTrip(tripID int, score float64) error {
 		WHERE id = $1`
 
 	_, err := s.db.Exec(sqlStatement, tripID, score)
-	
+
 	if err != nil {
 		log.Printf("Error ending trip %d: %v\n", tripID, err)
 	}

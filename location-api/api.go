@@ -30,12 +30,12 @@ func (s *APIServer) Run() {
 		w.Header().Set("Content-Type", "application/json")
 
 		response := map[string]string{
-			"status": "healthy",
+			"status":   "healthy",
 			"database": "connected",
 		}
 		json.NewEncoder(w).Encode(response)
 	}).Methods("GET")
-	
+
 	router.HandleFunc("/api/telemetry", func(w http.ResponseWriter, r *http.Request) {
 		var payload TelemetryPayload
 		err := json.NewDecoder(r.Body).Decode(&payload)
@@ -44,7 +44,7 @@ func (s *APIServer) Run() {
 			return
 		}
 		if err = s.store.InsertTelemetryData(payload); err != nil {
-			http.Error(w, "Error: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		} else {
 			log.Printf("Received telemetry for trip %d: lat=%.6f, lon=%.6f\n", payload.TripID, payload.Latitude, payload.Longitude)
@@ -52,12 +52,11 @@ func (s *APIServer) Run() {
 		}
 	}).Methods("POST")
 
-
 	router.HandleFunc("/api/trips", func(w http.ResponseWriter, r *http.Request) {
 		// Call the storage function we just created
 		tripID, err := s.store.CreateTrip()
 		if err != nil {
-			http.Error(w, "Error: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -74,7 +73,7 @@ func (s *APIServer) Run() {
 	router.HandleFunc("/api/trips/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		tripIDStr := vars["id"]
-		
+
 		tripID, err := strconv.Atoi(tripIDStr)
 		if err != nil {
 			http.Error(w, "Invalid trip ID format", http.StatusBadRequest)
@@ -92,7 +91,7 @@ func (s *APIServer) Run() {
 		finalScore := calculateEfficiencyScore(records)
 
 		if err = s.store.EndTrip(tripID, finalScore); err != nil {
-			http.Error(w, "Error: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -108,7 +107,7 @@ func (s *APIServer) Run() {
 	router.HandleFunc("/api/trips/{id}/telemetry", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		tripIDStr := vars["id"]
-		
+
 		tripID, err := strconv.Atoi(tripIDStr)
 		if err != nil {
 			http.Error(w, "Invalid trip ID format", http.StatusBadRequest)
@@ -129,6 +128,20 @@ func (s *APIServer) Run() {
 		json.NewEncoder(w).Encode(records)
 	}).Methods("GET")
 
+	// GET /api/trips - Returns a summary of all recorded trips
+	router.HandleFunc("/api/trips", func(w http.ResponseWriter, r *http.Request) {
+		trips, err := s.store.GetAllTrips()
+		if err != nil {
+			log.Printf("Error fetching all trips: %v\n", err)
+			http.Error(w, "Failed to retrieve trips", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(trips)
+	}).Methods("GET")
+
 	cors := handlers.CORS(
 		handlers.AllowedOrigins([]string{"http://localhost:5173", "https://efficiency-tracker-jet.vercel.app"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "OPTIONS"}),
@@ -139,4 +152,3 @@ func (s *APIServer) Run() {
 
 	http.ListenAndServe(s.listenAddr, cors(router))
 }
-
