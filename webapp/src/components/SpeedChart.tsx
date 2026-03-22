@@ -19,12 +19,12 @@ export default function SpeedChart({ tripId }: SpeedChartProps) {
       // Transform the raw telemetry data into the [timestamp, value] format ApexCharts expects
       const formattedData = data.map((point) => {
         const timestamp = new Date(point.recorded_at).getTime();
-        
+
         // Convert meters per second to MPH (1 m/s = 2.23694 mph)
         // If speed is null (lost GPS), default to 0
-        const speedMph = point.speed_mps !== null 
-            ? Math.round(point.speed_mps * 2.23694) 
-            : 0;
+        const speedMph = point.speed_mps !== null
+          ? Math.round(point.speed_mps * 2.23694)
+          : 0;
 
         return [timestamp, speedMph] as [number, number];
       });
@@ -116,11 +116,11 @@ export default function SpeedChart({ tripId }: SpeedChartProps) {
     <div className="m-2 p-4 bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl mx-auto mt-6">
       <h2 className="text-xl font-bold text-white mb-2">Trip #{tripId} Telemetry</h2>
       <div className="h-72">
-        <Chart 
-          options={chartOptions} 
-          series={series} 
-          type="area" 
-          height="100%" 
+        <Chart
+          options={chartOptions}
+          series={series}
+          type="area"
+          height="100%"
         />
       </div>
     </div>

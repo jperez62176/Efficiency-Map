@@ -28,7 +28,7 @@ export async function startNewTrip(): Promise<number | null> {
 
     const data: CreateTripResponse = await response.json();
     console.log("Started new trip with ID:", data.trip_id);
-    
+
     return data.trip_id;
 
   } catch (error) {
@@ -59,7 +59,7 @@ export async function sendTelemetryData(payload: TelemetryPayload): Promise<bool
   }
 }
 
-export async function endTrip(tripId: number): Promise<boolean> {
+export async function endTrip(tripId: number): Promise<number | null> {
   try {
     const response = await fetch(`${locationBaseURL}/api/trips/${tripId}`, {
       method: 'PUT',
@@ -72,12 +72,14 @@ export async function endTrip(tripId: number): Promise<boolean> {
       console.error(`Server returned ${response.status}`);
     }
 
-    console.log(`Trip ${tripId} successfully ended.`);
-    return true;
+    const data = await response.json();
+    console.log(`Trip ${tripId} ended. Score: ${data.score}`);
+
+    return data.score;
 
   } catch (error) {
     console.error("Failed to end trip:", error);
-    return false;
+    return null;
   }
 }
 
@@ -108,7 +110,7 @@ export async function getTripTelemetry(tripId: number): Promise<TelemetryRecord[
 
     const data: TelemetryRecord[] = await response.json();
     console.log(`Fetched ${data.length} telemetry records for trip ${tripId}.`);
-    
+
     return data;
 
   } catch (error) {

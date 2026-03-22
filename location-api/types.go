@@ -19,3 +19,12 @@ type TelemetryRecord struct {
 	SpeedMPS       *float64  `json:"speed_mps"`
 	RecordedAt     time.Time `json:"recorded_at"`
 }
+
+// TripSummary matches a single row from the trips table
+type TripSummary struct {
+	ID                  int        `json:"id"`
+	StartTime           time.Time  `json:"start_time"`
+	EndTime             *time.Time `json:"end_time"`
+	TotalDistanceMeters *float64   `json:"total_distance_meters"`
+	EfficiencyScore     *float64   `json:"efficiency_score"`
+}

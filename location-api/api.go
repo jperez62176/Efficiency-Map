@@ -75,25 +75,33 @@ func (s *APIServer) Run() {
 		vars := mux.Vars(r)
 		tripIDStr := vars["id"]
 		
-		// 2. Convert it from a string to an integer
 		tripID, err := strconv.Atoi(tripIDStr)
 		if err != nil {
 			http.Error(w, "Invalid trip ID format", http.StatusBadRequest)
 			return
 		}
 
-		// 3. Execute the database update
-		if err = s.store.EndTrip(tripID); err != nil {
+		// 1. Fetch all telemetry records for this trip
+		records, err := s.store.GetTripTelemetry(tripID)
+		if err != nil {
+			http.Error(w, "Failed to retrieve trip data for scoring", http.StatusInternalServerError)
+			return
+		}
+
+		// 2. Calculate the final score
+		finalScore := calculateEfficiencyScore(records)
+
+		if err = s.store.EndTrip(tripID, finalScore); err != nil {
 			http.Error(w, "Error: " + err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// 4. Return success
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK) // 200 OK
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":  "success",
 			"message": fmt.Sprintf("Trip %d successfully ended", tripID),
+			"score":   finalScore,
 		})
 	}).Methods("PUT")
 

@@ -11,8 +11,9 @@ import (
 type Storage interface {
 	InsertTelemetryData(payload TelemetryPayload) error
 	CreateTrip() (int, error)
-	EndTrip(tripID int) error
+	EndTrip(tripID int, score float64) error
 	GetTripTelemetry(tripID int) ([]TelemetryRecord, error)
+	GetAllTrips() ([]TripSummary, error)
 }
 
 type PostgresStorage struct {
@@ -74,21 +75,54 @@ func (s *PostgresStorage) CreateTrip() (int, error) {
 	return insertedID, err
 }
 
-func (s *PostgresStorage) EndTrip(tripID int) error {
+func (s *PostgresStorage) EndTrip(tripID int, score float64) error {
 	// This updates the existing row, setting the end_time to exactly right now.
 	// (Distance and efficiency calculations can be added to this query later!)
 	sqlStatement := `
 		UPDATE trips 
-		SET end_time = CURRENT_TIMESTAMP 
+		SET end_time = CURRENT_TIMESTAMP, efficiency_score = $2 
 		WHERE id = $1`
 
-	_, err := s.db.Exec(sqlStatement, tripID)
+	_, err := s.db.Exec(sqlStatement, tripID, score)
 	
 	if err != nil {
 		log.Printf("Error ending trip %d: %v\n", tripID, err)
 	}
 
 	return err
+}
+
+func (s *PostgresStorage) GetAllTrips() ([]TripSummary, error) {
+	query := `
+		SELECT id, start_time, end_time, total_distance_meters, efficiency_score
+		FROM trips
+		ORDER BY start_time DESC`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Initialize as an empty slice so it returns [] instead of null if the database is empty
+	trips := []TripSummary{}
+
+	for rows.Next() {
+		var t TripSummary
+		err := rows.Scan(
+			&t.ID,
+			&t.StartTime,
+			&t.EndTime,
+			&t.TotalDistanceMeters,
+			&t.EfficiencyScore,
+		)
+		if err != nil {
+			return nil, err
+		}
+		trips = append(trips, t)
+	}
+
+	return trips, nil
 }
 
 func (s *PostgresStorage) Close() {
